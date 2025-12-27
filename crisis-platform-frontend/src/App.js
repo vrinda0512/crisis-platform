@@ -1,0 +1,23 @@
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import ReportIncident from "./pages/ReportIncident";
+import IncidentStatus from "./pages/IncidentStatus";
+import Dashboard from "./pages/Dashboard";
+
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/report" element={<ReportIncident />} />
+        <Route path="/incident-status" element={<IncidentStatus />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        {/* future: /incident/:id */}
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
