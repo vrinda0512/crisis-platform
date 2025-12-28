@@ -26,8 +26,8 @@ const IncidentSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      default: "Reported",
-      enum: ["Reported", "Assigned", "Resolved"],
+      default: "reported",
+      enum: ["reported", "assigned", "resolved"],
     },
   },
   {

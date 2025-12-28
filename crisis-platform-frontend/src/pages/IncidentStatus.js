@@ -1,67 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import "./IncidentStatus.css";
 
 const IncidentStatus = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // 👈 from URL
+  const [incident, setIncident] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Dummy incident data (later comes from backend)
-  const incident = {
-    type: "Medical Emergency",
-    severity: "High",
-    location: "Auto‑detected location",
-    status: "reported", // reported | assigned | resolved
-  };
+  useEffect(() => {
+    const fetchIncident = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/incidents/${id}`
+        );
+        const data = await res.json();
+        setIncident(data);
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setLoading(false);
+      }
+    };
 
-  const getStatusBadge = () => {
-    if (incident.status === "reported") return "status reported";
-    if (incident.status === "assigned") return "status assigned";
-    if (incident.status === "resolved") return "status resolved";
-  };
+    fetchIncident();
+  }, [id]);
 
-  const getStatusText = () => {
-    if (incident.status === "reported") return "🟡 Reported";
-    if (incident.status === "assigned") return "🔵 Assigned";
-    if (incident.status === "resolved") return "🟢 Resolved";
-  };
+  if (loading) return <h2>Loading incident...</h2>;
+
+  if (!incident || incident.message)
+    return <h2>Incident not found</h2>;
 
   return (
-    <div className="status-container">
-      <div className="status-card">
-        <h2>📋 Incident Status</h2>
-        <p className="subtitle">
-          Your request has been received and is being processed.
-        </p>
-
-        <div className="info">
-          <div className="info-row">
-            <span>Incident Type</span>
-            <strong>{incident.type}</strong>
-          </div>
-
-          <div className="info-row">
-            <span>Severity</span>
-            <strong>{incident.severity}</strong>
-          </div>
-
-          <div className="info-row">
-            <span>Location</span>
-            <strong>{incident.location}</strong>
-          </div>
-
-          <div className="info-row">
-            <span>Status</span>
-            <span className={getStatusBadge()}>
-              {getStatusText()}
-            </span>
-          </div>
-        </div>
-
-        <p className="trust-text">
-          🚑 Help is on the way. Please stay safe and available for
-          further communication.
-        </p>
-      </div>
+    <div style={{ padding: "30px" }}>
+      <h2>📍 Incident Status</h2>
+      <p><strong>ID:</strong> {incident._id}</p>
+      <p><strong>Type:</strong> {incident.type}</p>
+      <p><strong>Severity:</strong> {incident.severity}</p>
+      <p><strong>Description:</strong> {incident.description}</p>
+      <p><strong>Location:</strong> {incident.location}</p>
+      <p><strong>Status:</strong> {incident.status}</p>
     </div>
   );
 };

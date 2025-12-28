@@ -1,0 +1,80 @@
+const express = require("express");
+const router = express.Router();
+const Incident = require("../models/Incident");
+
+/**
+ * 1️⃣ POST /api/incidents
+ * Create a new incident
+ */
+router.post("/", async (req, res) => {
+  try {
+    const { type, severity, description, location } = req.body;
+
+    const incident = new Incident({
+      type,
+      severity,
+      description,
+      location,
+      status: "reported",
+    });
+
+    const savedIncident = await incident.save();
+
+    res.status(201).json(savedIncident);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 2️⃣ GET /api/incidents
+ * Get all incidents (Dashboard)
+ */
+router.get("/", async (req, res) => {
+  try {
+    const incidents = await Incident.find().sort({ createdAt: -1 });
+    res.json(incidents);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 3️⃣ GET /api/incidents/:id
+ * Get single incident (Status page)
+ */
+router.get("/:id", async (req, res) => {
+  try {
+    const incident = await Incident.findById(req.params.id);
+
+    if (!incident) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    res.json(incident);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * 4️⃣ PUT /api/incidents/:id
+ * Update incident status (assigned / resolved)
+ */
+router.put("/:id", async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const updatedIncident = await Incident.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+
+    res.json(updatedIncident);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;

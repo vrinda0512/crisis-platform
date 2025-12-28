@@ -1,107 +1,82 @@
-import React, { useState } from "react";
-import "./Dashboard.css";
+import React, { useEffect, useState } from "react";
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("incidents");
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [incidents, setIncidents] = useState([
-    {
-      id: 1,
-      type: "Medical",
-      severity: "High",
-      status: "Reported",
-      location: "Sector 21",
-    },
-    {
-      id: 2,
-      type: "Fire",
-      severity: "Medium",
-      status: "Assigned",
-      location: "MG Road",
-    },
-  ]);
+  // Fetch all incidents
+  useEffect(() => {
+    fetch("http://localhost:5000/api/incidents")
+      .then((res) => res.json())
+      .then((data) => {
+        setIncidents(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error(err);
+        setLoading(false);
+      });
+  }, []);
 
-  const resources = [
-    { id: 1, name: "Ambulance A1", type: "Ambulance", status: "Available" },
-    { id: 2, name: "Volunteer Team V2", type: "Volunteer", status: "Busy" },
-  ];
+  // Update incident status
+  const updateStatus = async (id, newStatus) => {
+    await fetch(`http://localhost:5000/api/incidents/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
 
-  const assignResource = (id) => {
-    const updated = incidents.map((incident) =>
-      incident.id === id
-        ? { ...incident, status: "Assigned" }
-        : incident
-    );
-    setIncidents(updated);
+    // Refresh list after update
+    const res = await fetch("http://localhost:5000/api/incidents");
+    const data = await res.json();
+    setIncidents(data);
   };
 
+  if (loading) return <h2>Loading incidents...</h2>;
+
   return (
-    <div className="dashboard-container">
-      {/* LEFT MAP SECTION */}
-      <div className="map-section">
-        <h3>🗺️ Live Map View</h3>
-        <div className="map-placeholder">
-          <p>🔴 Incidents</p>
-          <p>🟢 Resources</p>
-          <p>(Map integration later)</p>
-        </div>
-      </div>
+    <div style={{ padding: "20px" }}>
+      <h2>🧑‍💼 Coordinator Dashboard</h2>
 
-      {/* RIGHT CONTROL PANEL */}
-      <div className="control-panel">
-        <div className="tabs">
-          <button
-            className={activeTab === "incidents" ? "active" : ""}
-            onClick={() => setActiveTab("incidents")}
+      {incidents.length === 0 ? (
+        <p>No incidents reported yet.</p>
+      ) : (
+        incidents.map((incident) => (
+          <div
+            key={incident._id}
+            style={{
+              border: "1px solid #ccc",
+              padding: "15px",
+              marginBottom: "10px",
+              borderRadius: "8px",
+            }}
           >
-            Incidents
-          </button>
-          <button
-            className={activeTab === "resources" ? "active" : ""}
-            onClick={() => setActiveTab("resources")}
-          >
-            Resources
-          </button>
-        </div>
+            <p><strong>Type:</strong> {incident.type}</p>
+            <p><strong>Severity:</strong> {incident.severity}</p>
+            <p><strong>Description:</strong> {incident.description}</p>
+            <p><strong>Status:</strong> {incident.status}</p>
 
-        {/* INCIDENTS TAB */}
-        {activeTab === "incidents" && (
-          <div className="list">
-            {incidents.map((incident) => (
-              <div key={incident.id} className="card">
-                <h4>{incident.type}</h4>
-                <p>📍 {incident.location}</p>
-                <span className={`badge ${incident.severity.toLowerCase()}`}>
-                  {incident.severity}
-                </span>
-                <p>Status: {incident.status}</p>
+            {incident.status !== "resolved" && (
+              <>
+                <button
+                  onClick={() => updateStatus(incident._id, "assigned")}
+                  style={{ marginRight: "10px" }}
+                >
+                  Assign
+                </button>
 
-                {incident.status === "Reported" && (
-                  <button
-                    className="assign-btn"
-                    onClick={() => assignResource(incident.id)}
-                  >
-                    Assign Resource
-                  </button>
-                )}
-              </div>
-            ))}
+                <button
+                  onClick={() => updateStatus(incident._id, "resolved")}
+                >
+                  Resolve
+                </button>
+              </>
+            )}
           </div>
-        )}
-
-        {/* RESOURCES TAB */}
-        {activeTab === "resources" && (
-          <div className="list">
-            {resources.map((res) => (
-              <div key={res.id} className="card">
-                <h4>{res.name}</h4>
-                <p>Type: {res.type}</p>
-                <p>Status: {res.status}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        ))
+      )}
     </div>
   );
 };

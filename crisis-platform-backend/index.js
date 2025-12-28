@@ -1,3 +1,4 @@
+const incidentRoutes = require("./routes/incidentRoutes");
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
@@ -20,6 +21,10 @@ app.get("/", (req, res) => {
 
 // Port
 const PORT = process.env.PORT || 5000;
+
+//app.use("/api/incidents", incidentRoutes);
+app.use("/api/incidents", require("./routes/incidentRoutes"));
+
 
 // Start server
 app.listen(PORT, () => {

@@ -12,7 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/report" element={<ReportIncident />} />
-        <Route path="/incident-status" element={<IncidentStatus />} />
+        <Route path="/incident/:id" element={<IncidentStatus />} />
         <Route path="/dashboard" element={<Dashboard />} />
         {/* future: /incident/:id */}
       </Routes>

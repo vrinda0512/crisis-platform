@@ -9,14 +9,40 @@ const ReportIncident = () => {
   const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // For now, just simulate success
-    alert("Incident reported successfully");
+    const incidentData = {
+      type: incidentType,          // must match backend enum
+      severity: severity,
+      description: description,
+      location: "Auto-detected",   // dummy for now
+    };
 
-    // Redirect to status page (we'll build later)
-    navigate("/incident-status");
+    try {
+      const res = await fetch("http://localhost:5000/api/incidents", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(incidentData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Something went wrong");
+        return;
+      }
+
+      alert("Incident reported successfully");
+
+      // Redirect to STATUS PAGE with real ID
+      navigate(`/incident/${data._id}`);
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
   };
 
   return (
@@ -36,10 +62,10 @@ const ReportIncident = () => {
             required
           >
             <option value="">Select type</option>
-            <option value="medical">Medical</option>
-            <option value="fire">Fire</option>
-            <option value="flood">Flood</option>
-            <option value="other">Other</option>
+            <option value="Medical">Medical</option>
+            <option value="Fire">Fire</option>
+            <option value="Flood">Flood</option>
+            <option value="Other">Other</option>
           </select>
 
           {/* SEVERITY */}
@@ -49,7 +75,7 @@ const ReportIncident = () => {
               <input
                 type="radio"
                 name="severity"
-                value="low"
+                value="Low"
                 onChange={(e) => setSeverity(e.target.value)}
                 required
               />
@@ -60,7 +86,7 @@ const ReportIncident = () => {
               <input
                 type="radio"
                 name="severity"
-                value="medium"
+                value="Medium"
                 onChange={(e) => setSeverity(e.target.value)}
               />
               Medium
@@ -70,7 +96,7 @@ const ReportIncident = () => {
               <input
                 type="radio"
                 name="severity"
-                value="high"
+                value="High"
                 onChange={(e) => setSeverity(e.target.value)}
               />
               High
@@ -86,7 +112,7 @@ const ReportIncident = () => {
             required
           ></textarea>
 
-          {/* LOCATION (DUMMY) */}
+          {/* LOCATION */}
           <div className="location-box">
             📍 Location auto‑detected
           </div>
