@@ -14,7 +14,6 @@ function App() {
         <Route path="/report" element={<ReportIncident />} />
         <Route path="/incident/:id" element={<IncidentStatus />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        {/* future: /incident/:id */}
       </Routes>
     </Router>
   );

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
 const IncidentStatus = () => {
-  const { id } = useParams(); // 👈 from URL
+  const { id } = useParams(); // ✅ get ID from URL
   const [incident, setIncident] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +12,13 @@ const IncidentStatus = () => {
         const res = await fetch(
           `http://localhost:5000/api/incidents/${id}`
         );
+
         const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Failed to fetch incident");
+        }
+
         setIncident(data);
         setLoading(false);
       } catch (err) {
@@ -21,23 +27,35 @@ const IncidentStatus = () => {
       }
     };
 
-    fetchIncident();
+    if (id) fetchIncident(); // ✅ only call if id exists
   }, [id]);
 
-  if (loading) return <h2>Loading incident...</h2>;
-
-  if (!incident || incident.message)
-    return <h2>Incident not found</h2>;
+  if (loading) return <p>Loading incident...</p>;
+  if (!incident) return <p>Incident not found</p>;
 
   return (
-    <div style={{ padding: "30px" }}>
+    <div style={{ padding: "20px" }}>
       <h2>📍 Incident Status</h2>
-      <p><strong>ID:</strong> {incident._id}</p>
-      <p><strong>Type:</strong> {incident.type}</p>
-      <p><strong>Severity:</strong> {incident.severity}</p>
-      <p><strong>Description:</strong> {incident.description}</p>
-      <p><strong>Location:</strong> {incident.location}</p>
-      <p><strong>Status:</strong> {incident.status}</p>
+
+      <p><b>ID:</b> {incident._id}</p>
+      <p><b>Type:</b> {incident.type}</p>
+      <p><b>Severity:</b> {incident.severity}</p>
+      <p><b>Description:</b> {incident.description}</p>
+      <p><b>Location:</b> {incident.location}</p>
+      <p><b>Status:</b> {incident.status}</p>
+
+      {/* ✅ GOOGLE MAP */}
+      <iframe
+        title="Incident Location"
+        width="100%"
+        height="300"
+        style={{ border: 0, marginTop: "10px" }}
+        loading="lazy"
+        allowFullScreen
+        src={`https://www.google.com/maps?q=${encodeURIComponent(
+          incident.location
+        )}&output=embed`}
+      />
     </div>
   );
 };

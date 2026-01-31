@@ -8,15 +8,16 @@ const ReportIncident = () => {
   const [incidentType, setIncidentType] = useState("");
   const [severity, setSeverity] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const incidentData = {
-      type: incidentType,          // must match backend enum
-      severity: severity,
-      description: description,
-      location: "Auto-detected",   // dummy for now
+      type: incidentType,
+      severity,
+      description,
+      location,
     };
 
     try {
@@ -30,6 +31,8 @@ const ReportIncident = () => {
 
       const data = await res.json();
 
+      console.log("Backend response:", data);
+
       if (!res.ok) {
         alert(data.error || "Something went wrong");
         return;
@@ -37,7 +40,7 @@ const ReportIncident = () => {
 
       alert("Incident reported successfully");
 
-      // Redirect to STATUS PAGE with real ID
+      // ✅ use incidentId returned by backend
       navigate(`/incident/${data._id}`);
     } catch (err) {
       console.error(err);
@@ -112,10 +115,15 @@ const ReportIncident = () => {
             required
           ></textarea>
 
-          {/* LOCATION */}
-          <div className="location-box">
-            📍 Location auto‑detected
-          </div>
+          {/* LOCATION INPUT */}
+          <label>Location</label>
+          <input
+            type="text"
+            placeholder="Enter city or address (e.g. Mumbai)"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            required
+          />
 
           <button type="submit" className="submit-btn">
             Submit Incident
