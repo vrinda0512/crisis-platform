@@ -1,38 +1,86 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // Fetch all incidents
   useEffect(() => {
-    fetch("http://localhost:5000/api/incidents")
-      .then((res) => res.json())
-      .then((data) => {
-        setIncidents(data);
+    const token = localStorage.getItem("token");
+
+    fetch("http://localhost:5000/api/incidents", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data?.message || data?.error || "Unauthorized";
+          if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            alert(msg);
+            navigate("/login");
+            return;
+          }
+          throw new Error(msg);
+        }
+        setIncidents(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-  }, []);
+  }, [navigate]);
+
 
   // Update incident status
   const updateStatus = async (id, newStatus) => {
-    await fetch(`http://localhost:5000/api/incidents/${id}`, {
+    const token = localStorage.getItem("token");
+
+    const updateRes = await fetch(`http://localhost:5000/api/incidents/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ status: newStatus }),
     });
 
-    // Refresh list after update
-    const res = await fetch("http://localhost:5000/api/incidents");
+    if (!updateRes.ok) {
+      const data = await updateRes.json().catch(() => ({}));
+      const msg = data?.message || data?.error || "Failed to update status";
+      if (updateRes.status === 401 || updateRes.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        alert(msg);
+        navigate("/login");
+        return;
+      }
+      alert(msg);
+      return;
+    }
+
+    const res = await fetch("http://localhost:5000/api/incidents", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const msg = data?.message || data?.error || "Failed to refresh incidents";
+      alert(msg);
+      return;
+    }
+
     const data = await res.json();
-    setIncidents(data);
+    setIncidents(Array.isArray(data) ? data : []);
   };
+
 
   if (loading) return <h2>Loading incidents...</h2>;
 
@@ -61,10 +109,10 @@ const Dashboard = () => {
             {incident.status !== "resolved" && (
               <>
                 <button
-                  onClick={() => updateStatus(incident._id, "assigned")}
+                  onClick={() => updateStatus(incident._id, "in-progress")}
                   style={{ marginRight: "10px" }}
                 >
-                  Assign
+                  Mark In-Progress
                 </button>
 
                 <button

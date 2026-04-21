@@ -31,6 +31,12 @@ const Home = () => {
             >
               🧭 Coordinator Dashboard
             </button>
+            <button
+              className="btn outline"
+              onClick={() => navigate("/volunteer/dashboard")}
+            >
+              🤝 Volunteer Dashboard
+            </button>
           </div>
         </div>
 
