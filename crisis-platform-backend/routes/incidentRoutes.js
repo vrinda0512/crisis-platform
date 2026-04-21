@@ -1,12 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const Incident = require("../models/Incident");
+const { protect, authorize } = require("../middlewares/authMiddleware");
 
 /**
  * 1️⃣ POST /api/incidents
- * Create a new incident
+ * Citizen can report incident
  */
 router.post("/", async (req, res) => {
+
   try {
     const { type, severity, description, location } = req.body;
 
@@ -19,7 +21,6 @@ router.post("/", async (req, res) => {
     });
 
     const savedIncident = await incident.save();
-
     res.status(201).json(savedIncident);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -28,20 +29,45 @@ router.post("/", async (req, res) => {
 
 /**
  * 2️⃣ GET /api/incidents
- * Get all incidents (Dashboard)
+ * Coordinator dashboard
  */
-router.get("/", async (req, res) => {
-  try {
-    const incidents = await Incident.find().sort({ createdAt: -1 });
-    res.json(incidents);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+router.get(
+  "/",
+  protect,
+  authorize("coordinator"),
+  async (req, res) => {
+    try {
+      const incidents = await Incident.find().sort({ createdAt: -1 });
+      res.json(incidents);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
+
+/**
+ * 3️⃣b GET /api/incidents/available
+ * Volunteer can view incidents that require assistance
+ */
+router.get(
+  "/available/list",
+  protect,
+  authorize("volunteer"),
+  async (req, res) => {
+    try {
+      const incidents = await Incident.find({
+        status: { $ne: "resolved" },
+      }).sort({ createdAt: -1 });
+      res.json(incidents);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 /**
  * 3️⃣ GET /api/incidents/:id
- * Get single incident (Status page)
+ * Public incident status lookup (for citizens)
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -59,22 +85,32 @@ router.get("/:id", async (req, res) => {
 
 /**
  * 4️⃣ PUT /api/incidents/:id
- * Update incident status (assigned / resolved)
+ * Coordinator updates status
  */
-router.put("/:id", async (req, res) => {
-  try {
-    const { status } = req.body;
+router.put(
+  "/:id",
+  protect,
+  authorize("coordinator"),
+  async (req, res) => {
+    try {
+      const { status } = req.body;
 
-    const updatedIncident = await Incident.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+      const allowed = ["reported", "in-progress", "resolved"];
+      if (status && !allowed.includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
 
-    res.json(updatedIncident);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+      const updatedIncident = await Incident.findByIdAndUpdate(
+        req.params.id,
+        { status },
+        { new: true }
+      );
+
+      res.json(updatedIncident);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
-});
+);
 
 module.exports = router;
